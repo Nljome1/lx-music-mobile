@@ -2,11 +2,11 @@
 
 ## 状态
 
-已采纳 (2026-07-11)
+已修订 (2026-07-11) — 纯 iOS 版本
 
 ## 背景
 
-用户要求移植后的 iOS 版本支持 CarPlay 车载模式。CarPlay 的 UI 由 CarPlay 系统渲染，只能使用 Apple 提供的有限模板（`CPListTemplate`、`CPNowPlayingTemplate`、`CPSearchTemplate` 等），不能嵌入 React Native 自定义视图。这意味着 CarPlay 端的 UI 必须用原生 Swift 实现。
+iOS 版本支持 CarPlay 车载模式。CarPlay 的 UI 由 CarPlay 系统渲染，只能使用 Apple 提供的有限模板（`CPListTemplate`、`CPNowPlayingTemplate`、`CPSearchTemplate` 等），不能嵌入 React Native 自定义视图。这意味着 CarPlay 端的 UI 必须用原生 Swift 实现。
 
 ## 决策
 
@@ -15,7 +15,7 @@
 ### 架构设计
 
 ```
-ios/LXMusic/CarPlay/
+ios/LxMusicMobile/CarPlay/
 ├── CarPlaySceneDelegate.swift       # CarPlay Scene 入口，注册模板
 ├── Templates/
 │   ├── NowPlayingController.swift   # CPNowPlayingTemplate（播放界面）

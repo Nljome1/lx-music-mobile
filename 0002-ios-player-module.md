@@ -2,11 +2,11 @@
 
 ## 状态
 
-已采纳 (2026-07-11)
+已修订 (2026-07-11) — 纯 iOS 版本
 
 ## 背景
 
-当前 Android 端播放器核心通过自定义 fork 的 `react-native-track-player` 实现，底层使用 Android Media3 ExoPlayer。iOS 端没有对应实现，需要选择一个播放器方案，且必须保持与现有 `plugins/player/` 层接口契约兼容。
+原 Android 版播放器核心通过自定义 fork 的 `react-native-track-player` 实现，底层使用 Android Media3 ExoPlayer。本项目为纯 iOS 版本，需要选择一个播放器方案，且必须保持与现有 `plugins/player/` 层接口契约兼容。
 
 ## 决策
 
@@ -14,7 +14,7 @@
 
 ### 技术映射
 
-| Android 当前实现 | iOS 对应方案 |
+| 原 Android 实现 | iOS 对应方案 |
 |------------------|-------------|
 | Media3 ExoPlayer | `AVQueuePlayer`（原生支持队列管理、预缓冲） |
 | MediaSession（通知栏控件） | `MPNowPlayingInfoCenter` + `MPRemoteCommandCenter`（控制中心 + 锁屏） |
@@ -37,26 +37,26 @@
 
 ### 为什么不用现成的 RN 播放器库
 
-官方 `react-native-track-player` 的 API 契约和队列模型与当前仓库中自定义 fork 的版本完全不同。`core/player/player.ts`（21KB）中大量逻辑依赖 fork 版本的特有 API 和事件模型。硬套一个现成库等于在 `core/` 层做大量适配，风险远高于自建原生模块。
+官方 `react-native-track-player` 的 API 契约和队列模型与原仓库中自定义 fork 的版本完全不同。`core/player/player.ts`（21KB）中大量逻辑依赖 fork 版本的特有 API 和事件模型。硬套一个现成库等于在 `core/` 层做大量适配，风险远高于自建原生模块。
 
 ## 后果
 
 ### 优势
 
 - `core/player/` 层零改动，接口契约完全兼容
-- `AVQueuePlayer` 原生支持队列和预加载，与 Android 端行为对齐
+- `AVQueuePlayer` 原生支持队列和预加载，播放体验流畅
 - `MPNowPlayingInfoCenter` 天然对接 CarPlay 的 `CPNowPlayingTemplate`，无需额外桥接
-- 定时关闭功能内建，移除 `react-native-background-timer` 依赖
+- 定时关闭功能内建，无需外部依赖
 
 ### 代价
 
 - 需编写约 1000-1500 行 Swift 代码（播放器服务 + Bridge + 事件系统）
-- `AVQueuePlayer` 的错误处理模型与 Media3 不同，需在 Bridge 层做适配
-- 音频卸载功能在 iOS 上不可用，需在设置 UI 中隐藏该选项
+- `AVQueuePlayer` 的错误处理模型与原 Media3 不同，需在 Bridge 层做适配
+- 音频卸载功能在 iOS 上不可用，需在设置 UI 中移除该选项
 
 ## 备选方案
 
 ### Fork 官方 `react-native-track-player`
 
 - 优势：减少原生代码编写量
-- 劣势：API 不兼容，`core/player/` 层需大量改动；官方版本不支持 Media3 的一些高级特性；Fork 维护成本不亚于自建
+- 劣势：API 不兼容，`core/player/` 层需大量改动；官方版本不支持一些高级特性；Fork 维护成本不亚于自建
