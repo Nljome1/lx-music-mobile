@@ -1,10 +1,9 @@
 // import { generateKeyPair } from 'crypto'
 import { gzipString, unGzipString } from '@/utils/fs'
-import BackgroundTimer from 'react-native-background-timer'
 
 export const request = async(url: string, { timeout = 10000, ...options }: RequestInit & { timeout?: number } = {}) => {
   const controller = new AbortController()
-  let id: number | null = BackgroundTimer.setTimeout(() => {
+  let id: number | null = setTimeout(() => {
     id = null
     controller.abort()
   }, timeout)
@@ -23,7 +22,7 @@ export const request = async(url: string, { timeout = 10000, ...options }: Reque
     throw err
   }).finally(() => {
     if (id == null) return
-    BackgroundTimer.clearTimeout(id)
+    clearTimeout(id)
   })
 }
 

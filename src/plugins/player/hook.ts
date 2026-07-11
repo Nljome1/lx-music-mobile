@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import TrackPlayer, { State, Event } from 'react-native-track-player'
+import TrackPlayer, { State, Event } from './trackPlayerShim'
 
 /** Get current playback state and subsequent updatates  */
 export const usePlaybackState = () => {

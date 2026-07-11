@@ -30,9 +30,6 @@ target 'LxMusicMobile' do
   # CarPlay 框架（系统框架，无需 Pod）
   # AVKit / AVFoundation（系统框架，无需 Pod）
 
-  # Enables Flipper
-  use_flipper!()
-
   post_install do |installer|
     react_native_post_install(installer)
     # 确保 iOS 最低版本

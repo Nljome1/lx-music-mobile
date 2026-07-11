@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import BackgroundTimer from 'react-native-background-timer'
+
 import { exitApp } from '@/core/common'
 import playerState from '@/store/player/state'
 import settingState from '@/store/setting/state'
@@ -31,7 +31,7 @@ const timeoutTools = {
   },
   clearTimeout() {
     if (!this.bgTimeout) return
-    BackgroundTimer.clearTimeout(this.bgTimeout)
+    clearTimeout(this.bgTimeout)
     clearInterval(this.timeout!)
     this.bgTimeout = null
     this.timeout = null
@@ -42,7 +42,7 @@ const timeoutTools = {
     this.clearTimeout()
     this.time = time
     this.startTime = performance.now()
-    this.bgTimeout = BackgroundTimer.setTimeout(() => {
+    this.bgTimeout = setTimeout(() => {
       this.clearTimeout()
       this.exit()
     }, time * 1000)

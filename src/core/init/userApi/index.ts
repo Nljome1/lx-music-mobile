@@ -1,7 +1,6 @@
 import { type InitParams, onScriptAction, sendAction, type ResponseParams, type UpdateInfoParams, type RequestParams } from '@/utils/nativeModules/userApi'
 import { log, setUserApiList, setUserApiStatus } from '@/core/userApi'
 import settingState from '@/store/setting/state'
-import BackgroundTimer from 'react-native-background-timer'
 import { fetchData } from './request'
 import { getUserApiList } from '@/utils/data'
 import { confirmDialog, openUrl, tipDialog } from '@/utils/tools'
@@ -42,14 +41,14 @@ export default async(setting: LX.AppSetting) => {
       const target = userApiRequestMap.get(data.requestKey)
       if (!target) return
       userApiRequestMap.delete(data.requestKey)
-      BackgroundTimer.clearTimeout(target.timeout)
+      clearTimeout(target.timeout)
       target.reject(new Error('request failed'))
     }
     const requestPromise = new Promise<ResponseParams['result']>((resolve, reject) => {
       userApiRequestMap.set(data.requestKey, {
         resolve,
         reject,
-        timeout: BackgroundTimer.setTimeout(() => {
+        timeout: setTimeout(() => {
           const target = userApiRequestMap.get(data.requestKey)
           if (!target) return
           userApiRequestMap.delete(data.requestKey)
@@ -67,7 +66,7 @@ export default async(setting: LX.AppSetting) => {
     const target = userApiRequestMap.get(requestKey)
     if (!target) return
     userApiRequestMap.delete(requestKey)
-    BackgroundTimer.clearTimeout(target.timeout)
+    clearTimeout(target.timeout)
     if (status) target.resolve(result)
     else target.reject(new Error(errorMessage ?? 'failed'))
   }

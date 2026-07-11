@@ -1,4 +1,4 @@
-import { Platform, ToastAndroid, BackHandler, Linking, Dimensions, Alert, Appearance, PermissionsAndroid, AppState, StyleSheet, type ScaledSize } from 'react-native'
+import { Platform, Linking, Dimensions, Alert, Appearance, AppState, StyleSheet, type ScaledSize } from 'react-native'
 // import ExtraDimensions from 'react-native-extra-dimensions-android'
 import Clipboard from '@react-native-clipboard/clipboard'
 import { storageDataPrefix } from '@/config/constant'
@@ -6,7 +6,6 @@ import { gzipFile, readFile, temporaryDirectoryPath, unGzipFile, unlink, writeFi
 import { getSystemLocales, isIgnoringBatteryOptimization, isNotificationsEnabled, requestNotificationPermission, requestIgnoreBatteryOptimization, shareText } from '@/utils/nativeModules/utils'
 import musicSdk from '@/utils/musicSdk'
 import { getData, removeData, saveData } from '@/plugins/storage'
-import BackgroundTimer from 'react-native-background-timer'
 import { scaleSizeH, scaleSizeW, setSpText } from './pixelRatio'
 import { toOldMusicInfo } from './index'
 import { stringMd5 } from 'react-native-quick-md5'
@@ -24,9 +23,8 @@ export const getDeviceLanguage = async() => {
 }
 
 
-export const isAndroid = Platform.OS === 'android'
-// @ts-expect-error
-export const osVer = Platform.constants.Release as string
+export const isAndroid = false
+export const osVer = String(Platform.Version)
 
 export const isActive = () => AppState.currentState == 'active'
 
@@ -56,83 +54,20 @@ export const TEMP_FILE_PATH = temporaryDirectoryPath + '/tempFile'
 //   // return windowSize
 // }
 
-export const checkStoragePermissions = async() => PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE)
+// iOS 上不需要存储权限，直接返回 true
+export const checkStoragePermissions = async() => true
 
-export const requestStoragePermission = async() => {
-  const isGranted = await checkStoragePermissions()
-  if (isGranted) return isGranted
-
-  try {
-    const granted = await PermissionsAndroid.requestMultiple(
-      [
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-      ],
-      // {
-      //   title: '存储读写权限申请',
-      //   message:
-      //     '洛雪音乐助手需要使用存储读写权限才能下载歌曲.',
-      //   buttonNeutral: '一会再问我',
-      //   buttonNegative: '取消',
-      //   buttonPositive: '确定',
-      // },
-    )
-    // console.log(granted)
-    // console.log(Object.values(granted).every(r => r === PermissionsAndroid.RESULTS.GRANTED))
-    // console.log(PermissionsAndroid.RESULTS)
-    const granteds = Object.values(granted)
-    return granteds.every(r => r === PermissionsAndroid.RESULTS.GRANTED)
-      ? true
-      : granteds.includes(PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN)
-        ? null
-        : false
-    // if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-    //   console.log('You can use the storage')
-    // } else {
-    //   console.log('Storage permission denied')
-    // }
-  } catch (err: any) {
-    // console.warn(err)
-    return false
-  }
-}
+export const requestStoragePermission = async() => true
 
 
 /**
- * 显示toast
+ * 显示toast（iOS 上使用 Alert 替代 ToastAndroid）
  * @param message 消息
- * @param duration 时长
- * @param position 位置
+ * @param duration 时长（iOS 上忽略）
+ * @param position 位置（iOS 上忽略）
  */
-export const toast = (message: string, duration: 'long' | 'short' = 'short', position: 'top' | 'center' | 'bottom' = 'bottom') => {
-  let _duration
-  switch (duration) {
-    case 'long':
-      _duration = ToastAndroid.LONG
-      break
-    case 'short':
-    default:
-      _duration = ToastAndroid.SHORT
-      break
-  }
-  let _position
-  let offset: number
-  switch (position) {
-    case 'top':
-      _position = ToastAndroid.TOP
-      offset = 120
-      break
-    case 'center':
-      _position = ToastAndroid.CENTER
-      offset = 0
-      break
-    case 'bottom':
-    default:
-      _position = ToastAndroid.BOTTOM
-      offset = 120
-      break
-  }
-  ToastAndroid.showWithGravityAndOffset(message, _duration, _position, 0, offset)
+export const toast = (message: string, _duration: 'long' | 'short' = 'short', _position: 'top' | 'center' | 'bottom' = 'bottom') => {
+  Alert.alert('', message)
 }
 
 export const openUrl = async(url: string): Promise<void> => Linking.canOpenURL(url).then(async() => Linking.openURL(url))
@@ -146,8 +81,9 @@ export const assertApiSupport = (source: LX.Source): boolean => {
 //   if (keys.length) return handleRemoveDataMultiple(keys)
 // }
 
-export const exitApp = () => {
-  BackHandler.exitApp()
+export const exitApp = (message?: string) => {
+  // iOS 不允许应用主动退出，仅记录日志
+  console.log('exitApp called:', message ?? '')
 }
 
 export const handleSaveFile = async(path: string, data: any) => {
@@ -369,9 +305,7 @@ let isSupportedAutoTheme: boolean | null = null
 export const getIsSupportedAutoTheme = () => {
   if (isSupportedAutoTheme == null) {
     const osVerNum = parseInt(osVer)
-    isSupportedAutoTheme = isAndroid
-      ? osVerNum >= 5
-      : osVerNum >= 13
+    isSupportedAutoTheme = osVerNum >= 13
   }
   return isSupportedAutoTheme
 }
@@ -422,7 +356,7 @@ export function throttleBackgroundTimer<Args extends any[]>(fn: (...args: Args) 
   return (...args: Args) => {
     _args = args
     if (timer) return
-    timer = BackgroundTimer.setTimeout(() => {
+    timer = setTimeout(() => {
       timer = null
       void fn(..._args)
     }, delay)
@@ -440,8 +374,8 @@ export function debounceBackgroundTimer<Args extends any[]>(fn: (...args: Args) 
   let _args: Args
   return (...args: Args) => {
     _args = args
-    if (timer) BackgroundTimer.clearTimeout(timer)
-    timer = BackgroundTimer.setTimeout(() => {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => {
       timer = null
       void fn(..._args)
     }, delay)

@@ -2,7 +2,6 @@ import { playNext, setMusicUrl } from '@/core/player/player'
 import { setStatusText } from '@/core/player/playStatus'
 import { getPosition, isEmpty, setStop } from '@/plugins/player'
 import { isActive } from '@/utils/tools'
-import BackgroundTimer from 'react-native-background-timer'
 import playerState from '@/store/player/state'
 import { setNowPlayTime } from '@/core/player/progress'
 
@@ -16,7 +15,7 @@ export default () => {
   const startLoadingTimeout = () => {
     // console.log('start load timeout')
     clearLoadingTimeout()
-    loadingTimeout = BackgroundTimer.setTimeout(() => {
+    loadingTimeout = setTimeout(() => {
       // if (global.lx.isPlayedStop) {
       //   prevTimeoutId = null
       //   setStatusText('')
@@ -36,19 +35,19 @@ export default () => {
   const clearLoadingTimeout = () => {
     if (!loadingTimeout) return
     // console.log('clear load timeout')
-    BackgroundTimer.clearTimeout(loadingTimeout)
+    clearTimeout(loadingTimeout)
     loadingTimeout = null
   }
 
   const clearDelayNextTimeout = () => {
     // console.log(this.delayNextTimeout)
     if (!delayNextTimeout) return
-    BackgroundTimer.clearTimeout(delayNextTimeout)
+    clearTimeout(delayNextTimeout)
     delayNextTimeout = null
   }
   const addDelayNextTimeout = () => {
     clearDelayNextTimeout()
-    delayNextTimeout = BackgroundTimer.setTimeout(() => {
+    delayNextTimeout = setTimeout(() => {
       if (global.lx.isPlayedStop) {
         setStatusText('')
         return

@@ -1,11 +1,9 @@
 import { memo } from 'react'
-import { Platform } from 'react-native'
 
 import Section from '../../components/Section'
 import IsSavePlayTime from './IsSavePlayTime'
 import PlayHighQuality from './PlayHighQuality'
 import IsHandleAudioFocus from './IsHandleAudioFocus'
-import IsEnableAudioOffload from './IsEnableAudioOffload'
 import IsAutoCleanPlayedList from './IsAutoCleanPlayedList'
 import IsShowBluetoothLyric from './IsShowBluetoothLyric'
 import IsShowBluetoothFullLyric from './IsShowBluetoothFullLyric'
@@ -25,8 +23,6 @@ export default memo(() => {
       <IsSavePlayTime />
       <IsAutoCleanPlayedList />
       <IsHandleAudioFocus />
-      {/* 音频卸载为 Android 专属功能，iOS 无此概念 */}
-      {Platform.OS === 'android' && <IsEnableAudioOffload />}
       <IsShowBluetoothLyric />
       <IsShowBluetoothFullLyric />
       <IsShowNotificationImage />

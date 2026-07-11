@@ -1,17 +1,8 @@
-import { Platform } from 'react-native'
-import TrackPlayer, { State } from 'react-native-track-player'
-import BackgroundTimer from 'react-native-background-timer'
+import TrackPlayer, { State } from './trackPlayerShim'
 import { defaultUrl } from '@/config'
 // import { action as playerAction } from '@/store/modules/player'
 import settingState from '@/store/setting/state'
 import playerState from '@/store/player/state'
-
-// iOS 上使用原生 setTimeout/clearTimeout（AVAudioSession 已配置后台播放）
-// Android 上使用 BackgroundTimer（后台保活）
-const Timer = Platform.OS === 'ios' ? {
-  setTimeout: (fn: (...args: any[]) => void, delay?: number) => setTimeout(fn, delay),
-  clearTimeout: (id: number | null) => { if (id) clearTimeout(id) },
-} : BackgroundTimer
 
 
 const list: LX.Player.Track[] = []
@@ -262,7 +253,7 @@ const debounceUpdateMetaInfoTools = {
       // }
       if (isDelayRun) {
         _musicInfo = musicInfo
-        timer = Timer.setTimeout(() => {
+        timer = setTimeout(() => {
           timer = null
           let musicInfo = _musicInfo
           _musicInfo = null
@@ -273,7 +264,7 @@ const debounceUpdateMetaInfoTools = {
       } else {
         isDelayRun = true
         void fn(musicInfo)
-        Timer.setTimeout(() => {
+        setTimeout(() => {
           // delayTimer = null
           isDelayRun = false
         }, 500)
@@ -311,7 +302,7 @@ export const delayUpdateMusicInfo = debounceUpdateMetaInfoTools.init()
 //         BackgroundTimer.clearTimeout(delayTimer)
 //         delayTimer = null
 //       }
-//       timer = BackgroundTimer.setTimeout(() => {
+//       timer = BackgroundsetTimeout(() => {
 //         timer = null
 //         let track = _track
 //         _track = null
@@ -321,7 +312,7 @@ export const delayUpdateMusicInfo = debounceUpdateMetaInfoTools.init()
 //     } else {
 //       isDelayRun = true
 //       fn(track)
-//       delayTimer = BackgroundTimer.setTimeout(() => {
+//       delayTimer = BackgroundsetTimeout(() => {
 //         delayTimer = null
 //         isDelayRun = false
 //       }, 500)

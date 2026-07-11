@@ -1,17 +1,8 @@
-import { Platform } from 'react-native'
-import TrackPlayer, { Capability, Event, RepeatMode, State } from 'react-native-track-player'
-import BackgroundTimer from 'react-native-background-timer'
+import TrackPlayer, { Capability, Event, RepeatMode, State } from './trackPlayerShim'
 import { playMusic as handlePlayMusic } from './playList'
 import { existsFile, moveFile, privateStorageDirectoryPath, temporaryDirectoryPath } from '@/utils/fs'
 import { toast } from '@/utils/tools'
 // import { PlayerMusicInfo } from '@/store/modules/player/playInfo'
-
-// iOS 上使用原生 setTimeout/clearTimeout（AVAudioSession 已配置后台播放）
-// Android 上使用 BackgroundTimer（后台保活）
-const Timer = Platform.OS === 'ios' ? {
-  setTimeout: (fn: (...args: any[]) => void, delay?: number) => setTimeout(fn, delay),
-  clearTimeout: (id: number | null) => { if (id) clearTimeout(id) },
-} : BackgroundTimer
 
 export { useBufferProgress } from './hook'
 
@@ -59,12 +50,12 @@ export const isTempId = (trackId = global.lx.playerTrackId) => !trackId || tempI
 //       _tracks = tracks
 //       _time = time
 //       if (timer) {
-//         BackgroundTimer.clearTimeout(timer)
+//         BackgroundclearTimeout(timer)
 //         timer = null
 //       }
 //       if (this.isDelayUpdate) {
 //         if (this.updateDelayTimer) {
-//           BackgroundTimer.clearTimeout(this.updateDelayTimer)
+//           BackgroundclearTimeout(this.updateDelayTimer)
 //           this.updateDelayTimer = null
 //         }
 //         timer = BackgroundTimer.setTimeout(() => {
@@ -87,7 +78,7 @@ export const isTempId = (trackId = global.lx.playerTrackId) => !trackId || tempI
 //     }
 //   },
 //   delayUpdateMusicInfo() {
-//     if (this.delayTimer) BackgroundTimer.clearTimeout(this.delayTimer)
+//     if (this.delayTimer) BackgroundclearTimeout(this.delayTimer)
 //     this.delayTimer = BackgroundTimer.setTimeout(() => {
 //       this.delayTimer = null
 //       if (this.trackInfo.tracks && this.trackInfo.tracks.length) delayUpdateMusicInfo(this.trackInfo.tracks[0])
@@ -125,12 +116,12 @@ const playMusic = ((fn: (musicInfo: LX.Player.PlayMusic, url: string, time: numb
     _url = url
     _time = time
     if (timer) {
-      Timer.clearTimeout(timer)
+      clearTimeout(timer)
       timer = null
     }
     if (isDelayRun) {
       if (delayTimer) {
-        Timer.clearTimeout(delayTimer)
+        clearTimeout(delayTimer)
         delayTimer = null
       }
       timer = Timer.setTimeout(() => {
@@ -201,7 +192,7 @@ export const migratePlayerCache = async() => {
     toast(global.i18n.t('player_cache_migrating'), 'long')
   }, 2_000)
   await moveFile(oldCachePath, newCachePath).finally(() => {
-    if (timeout) Timer.clearTimeout(timeout)
+    if (timeout) clearTimeout(timeout)
   })
 }
 

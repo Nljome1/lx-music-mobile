@@ -1,78 +1,100 @@
-import { Platform } from 'react-native'
 import RNFS from 'react-native-fs'
 
-// iOS 上使用原生模块 FileSystemModule，Android 上使用 react-native-file-system
-// 使用条件 require 避免 iOS 上导入 Android 专属依赖导致运行时错误
-const isIOS = Platform.OS === 'ios'
+// 类型定义（替代原 react-native-file-system 的类型）
+export interface FileType {
+  name: string
+  path: string
+  size: number
+  mimeType?: string
+  isDirectory?: boolean
+}
 
-// 类型导入（编译时移除，不影响运行时）
-import type {
-  OpenDocumentOptions,
-  Encoding,
-  HashAlgorithm,
-} from 'react-native-file-system'
+export type Encoding = 'utf8' | 'base64'
+export type HashAlgorithm = 'md5' | 'sha1' | 'sha256' | 'sha512'
 
-export type {
-  FileType,
-} from 'react-native-file-system'
+// 路径常量
+export const temporaryDirectoryPath = RNFS.CachesDirectoryPath
+export const externalStorageDirectoryPath = RNFS.DocumentDirectoryPath
+export const privateStorageDirectoryPath = RNFS.DocumentDirectoryPath
 
-// Android 上条件加载 react-native-file-system
-const RNFileSystem = isIOS ? null : require('react-native-file-system')
-const Dirs = isIOS ? null : RNFileSystem.Dirs
-const FileSystem = isIOS ? null : RNFileSystem.FileSystem
-const AndroidScoped = isIOS ? null : RNFileSystem.AndroidScoped
-const _getExternalStoragePaths = isIOS ? null : RNFileSystem.getExternalStoragePaths
+export const getExternalStoragePaths = async(_is_removable?: boolean) => [RNFS.DocumentDirectoryPath]
+
+// iOS 无 Scoped Storage 概念，返回空值
+export const selectManagedFolder = async(_isPersist: boolean = false) => null
+export const selectFile = async(_options: Record<string, any>) => null
+export const removeManagedFolder = async(_path: string) => undefined
+export const getManagedFolders = async() => []
+export const getPersistedUriList = async() => []
 
 export const extname = (name: string) => name.lastIndexOf('.') > 0 ? name.substring(name.lastIndexOf('.') + 1) : ''
 
-// 路径常量：iOS 使用 RNFS 路径，Android 使用 Dirs 枚举
-export const temporaryDirectoryPath = isIOS ? RNFS.CachesDirectoryPath : Dirs.CacheDir
-export const externalStorageDirectoryPath = isIOS ? RNFS.DocumentDirectoryPath : Dirs.SDCardDir
-export const privateStorageDirectoryPath = isIOS ? RNFS.DocumentDirectoryPath : Dirs.DocumentDir
+// 文件系统操作（使用 react-native-fs）
+export const readDir = async(path: string): Promise<FileType[]> => {
+  const items = await RNFS.readDir(path)
+  return items.map(item => ({
+    name: item.name,
+    path: item.path,
+    size: item.size,
+    mimeType: item.mimeType,
+    isDirectory: item.isDirectory(),
+  }))
+}
 
-export const getExternalStoragePaths = async(is_removable?: boolean) => isIOS
-  ? [RNFS.DocumentDirectoryPath]
-  : _getExternalStoragePaths(is_removable)
+export const unlink = async(path: string) => RNFS.unlink(path)
 
-// Android Scoped Storage 在 iOS 上无对应概念，返回空值
-export const selectManagedFolder = async(isPersist: boolean = false) => isIOS ? null : AndroidScoped.openDocumentTree(isPersist)
-export const selectFile = async(options: OpenDocumentOptions) => isIOS ? null : AndroidScoped.openDocument(options)
-export const removeManagedFolder = async(path: string) => isIOS ? undefined : AndroidScoped.releasePersistableUriPermission(path)
-export const getManagedFolders = async() => isIOS ? [] : AndroidScoped.getPersistedUriPermissions()
+export const mkdir = async(path: string) => RNFS.mkdir(path)
 
-export const getPersistedUriList = async() => isIOS ? [] : AndroidScoped.getPersistedUriPermissions()
+export const stat = async(path: string) => {
+  const result = await RNFS.stat(path)
+  return {
+    ...result,
+    lastModified: new Date(result.mtime).getTime(),
+  }
+}
 
+export const hash = async(path: string, algorithm: string) => RNFS.hash(path, algorithm)
 
-export const readDir = async(path: string) => FileSystem.ls(path)
+export const readFile = async(path: string, encoding?: Encoding) => {
+  if (encoding === 'base64') return RNFS.readFile(path, 'base64')
+  return RNFS.readFile(path, 'utf8')
+}
 
-export const unlink = async(path: string) => FileSystem.unlink(path)
+export const moveFile = async(fromPath: string, toPath: string) => RNFS.moveFile(fromPath, toPath)
 
-export const mkdir = async(path: string) => FileSystem.mkdir(path)
+// gzip 压缩/解压（iOS 上暂不支持，返回原始数据）
+export const gzipFile = async(fromPath: string, _toPath: string) => {
+  console.warn('gzipFile is not supported on iOS, copying instead')
+  await RNFS.copyFile(fromPath, _toPath)
+}
+export const unGzipFile = async(fromPath: string, _toPath: string) => {
+  console.warn('unGzipFile is not supported on iOS, copying instead')
+  await RNFS.copyFile(fromPath, _toPath)
+}
+export const gzipString = async(data: string, _encoding?: Encoding) => data
+export const unGzipString = async(data: string, _encoding?: Encoding) => data
 
-export const stat = async(path: string) => FileSystem.stat(path)
-export const hash = async(path: string, algorithm: HashAlgorithm) => FileSystem.hash(path, algorithm)
+export const existsFile = async(path: string) => RNFS.exists(path)
 
-export const readFile = async(path: string, encoding?: Encoding) => FileSystem.readFile(path, encoding)
+export const rename = async(path: string, name: string) => {
+  const parentPath = path.substring(0, path.lastIndexOf('/'))
+  const newPath = `${parentPath}/${name}`
+  await RNFS.moveFile(path, newPath)
+}
 
+export const writeFile = async(path: string, data: string, encoding?: Encoding) => {
+  if (encoding === 'base64') return RNFS.writeFile(path, data, 'base64')
+  return RNFS.writeFile(path, data, 'utf8')
+}
 
-export const moveFile = async(fromPath: string, toPath: string) => FileSystem.mv(fromPath, toPath)
-export const gzipFile = async(fromPath: string, toPath: string) => FileSystem.gzipFile(fromPath, toPath)
-export const unGzipFile = async(fromPath: string, toPath: string) => FileSystem.unGzipFile(fromPath, toPath)
-export const gzipString = async(data: string, encoding?: Encoding) => FileSystem.gzipString(data, encoding)
-export const unGzipString = async(data: string, encoding?: Encoding) => FileSystem.unGzipString(data, encoding)
-
-export const existsFile = async(path: string) => FileSystem.exists(path)
-
-export const rename = async(path: string, name: string) => FileSystem.rename(path, name)
-
-export const writeFile = async(path: string, data: string, encoding?: Encoding) => FileSystem.writeFile(path, data, encoding)
-
-export const appendFile = async(path: string, data: string, encoding?: Encoding) => FileSystem.appendFile(path, data, encoding)
+export const appendFile = async(path: string, data: string, encoding?: Encoding) => {
+  if (encoding === 'base64') return RNFS.appendFile(path, data, 'base64')
+  return RNFS.appendFile(path, data, 'utf8')
+}
 
 export const downloadFile = (url: string, path: string, options: Omit<RNFS.DownloadFileOptions, 'fromUrl' | 'toFile'> = {}) => {
   if (!options.headers) {
     options.headers = {
-      'User-Agent': 'Mozilla/5.0 (Linux; Android 10; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Mobile Safari/537.36',
+      'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
     }
   }
   return RNFS.downloadFile({

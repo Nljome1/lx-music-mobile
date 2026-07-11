@@ -23,7 +23,7 @@ import { getMusicUrl, getPicPath, getLyricInfo } from '@/core/music'
 import { requestMsg } from '@/utils/message'
 import { getRandom } from '@/utils/common'
 import { filterList } from './utils'
-import BackgroundTimer from 'react-native-background-timer'
+
 import { checkIgnoringBatteryOptimization, checkNotificationPermission, debounceBackgroundTimer } from '@/utils/tools'
 import { LIST_IDS } from '@/config/constant'
 import { addListMusics, removeListMusics } from '@/core/list'
@@ -36,14 +36,14 @@ const createDelayNextTimeout = (delay: number) => {
   const clearDelayNextTimeout = () => {
     // console.log(this.timeout)
     if (timeout) {
-      BackgroundTimer.clearTimeout(timeout)
+      clearTimeout(timeout)
       timeout = null
     }
   }
 
   const addDelayNextTimeout = () => {
     clearDelayNextTimeout()
-    timeout = BackgroundTimer.setTimeout(() => {
+    timeout = setTimeout(() => {
       timeout = null
       if (global.lx.isPlayedStop) return
       console.log('delay next timeout timeout', delay)
@@ -235,7 +235,6 @@ const handlePlay = async() => {
       playRate: settingState.setting['player.playbackRate'],
       cacheSize: settingState.setting['player.cacheSize'] ? parseInt(settingState.setting['player.cacheSize']) : 0,
       isHandleAudioFocus: settingState.setting['player.isHandleAudioFocus'],
-      isEnableAudioOffload: settingState.setting['player.isEnableAudioOffload'],
     })
   }
 

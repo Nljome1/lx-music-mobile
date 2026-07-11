@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
-import TrackPlayer, { State as TPState, Event as TPEvent } from 'react-native-track-player'
+import TrackPlayer, { State as TPState, Event as TPEvent } from './trackPlayerShim'
 // import { store } from '@/store'
 // import { action as playerAction, STATUS } from '@/store/modules/player'
 import { isTempId, isEmpty } from './utils'

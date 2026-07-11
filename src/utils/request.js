@@ -1,17 +1,8 @@
 // import needle from 'needle'
 // import progress from 'request-progress'
-import { Platform } from 'react-native'
-import BackgroundTimer from 'react-native-background-timer'
 import { requestMsg } from './message'
 import { bHh } from './musicSdk/options'
 import { deflateRaw } from 'pako'
-
-// iOS 上使用原生 setTimeout/clearTimeout（AVAudioSession 已配置后台播放）
-// Android 上使用 BackgroundTimer（后台保活）
-const Timer = Platform.OS === 'ios' ? {
-  setTimeout: (fn, delay) => setTimeout(fn, delay),
-  clearTimeout: (id) => clearTimeout(id),
-} : BackgroundTimer
 
 const defaultHeaders = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36',
@@ -77,7 +68,7 @@ const fetchWithTimeout = (resource, options) => {
   const { timeout = 8000 } = options
 
   const controller = new global.AbortController()
-  const id = Timer.setTimeout(() => controller.abort(), timeout)
+  const id = setTimeout(() => controller.abort(), timeout)
 
   return {
     request: global.fetch(resource, {
@@ -178,7 +169,7 @@ const fetchData = (url, { timeout = 15000, ...options }) => {
   console.log('---start---', url)
 
   const controller = new global.AbortController()
-  let id = Timer.setTimeout(() => {
+  let id = setTimeout(() => {
     id = null
     controller.abort()
   }, timeout)

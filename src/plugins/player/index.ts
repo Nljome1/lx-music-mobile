@@ -1,4 +1,4 @@
-import TrackPlayer from 'react-native-track-player'
+import TrackPlayer from './trackPlayerShim'
 import { updateOptions, setVolume, setPlaybackRate, migratePlayerCache } from './utils'
 
 // const listenEvent = () => {
@@ -16,12 +16,11 @@ import { updateOptions, setVolume, setPlaybackRate, migratePlayerCache } from '.
 //   })
 // }
 
-const initial = async({ volume, playRate, cacheSize, isHandleAudioFocus, isEnableAudioOffload }: {
+const initial = async({ volume, playRate, cacheSize, isHandleAudioFocus }: {
   volume: number
   playRate: number
   cacheSize: number
   isHandleAudioFocus: boolean
-  isEnableAudioOffload: boolean
 }) => {
   if (global.lx.playerStatus.isIniting || global.lx.playerStatus.isInitialized) return
   global.lx.playerStatus.isIniting = true
@@ -32,7 +31,6 @@ const initial = async({ volume, playRate, cacheSize, isHandleAudioFocus, isEnabl
     maxBuffer: 1000,
     waitForBuffer: true,
     handleAudioFocus: isHandleAudioFocus,
-    audioOffload: isEnableAudioOffload,
     autoUpdateMetadata: false,
   })
   global.lx.playerStatus.isInitialized = true

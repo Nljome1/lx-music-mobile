@@ -4,7 +4,6 @@ import { setCurrentTime, getDuration, getPosition } from '@/plugins/player'
 import { formatPlayTime2 } from '@/utils/common'
 import { savePlayInfo } from '@/utils/data'
 import { throttleBackgroundTimer } from '@/utils/tools'
-import BackgroundTimer from 'react-native-background-timer'
 import playerState from '@/store/player/state'
 import settingState from '@/store/setting/state'
 import { onScreenStateChange } from '@/utils/nativeModules/utils'
@@ -58,13 +57,13 @@ export default () => {
 
   const clearUpdateTimeout = () => {
     if (!updateTimeout) return
-    BackgroundTimer.clearInterval(updateTimeout)
+    clearInterval(updateTimeout)
     updateTimeout = null
   }
   const startUpdateTimeout = () => {
     if (!isScreenOn) return
     clearUpdateTimeout()
-    updateTimeout = BackgroundTimer.setInterval(() => {
+    updateTimeout = setInterval(() => {
       getCurrentTime()
     }, 1000 / settingState.setting['player.playbackRate'])
     getCurrentTime()

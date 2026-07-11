@@ -9,7 +9,7 @@ import { langS2T, toNewMusicInfo, toOldMusicInfo } from '@/utils'
 import { assertApiSupport } from '@/utils/tools'
 import settingState from '@/store/setting/state'
 import { requestMsg } from '@/utils/message'
-import BackgroundTimer from 'react-native-background-timer'
+
 import { apis } from '@/utils/musicSdk/api-source'
 
 
@@ -53,7 +53,7 @@ export const getOtherSource = async(musicInfo: LX.Music.MusicInfo | LX.Download.
   if (getOtherSourcePromises.has(key)) return getOtherSourcePromises.get(key)
 
   const promise = new Promise<LX.Music.MusicInfoOnline[]>((resolve, reject) => {
-    let timeout: null | number = BackgroundTimer.setTimeout(() => {
+    let timeout: null | number = setTimeout(() => {
       timeout = null
       reject(new Error('find music timeout'))
     }, 12_000)
@@ -63,7 +63,7 @@ export const getOtherSource = async(musicInfo: LX.Music.MusicInfo | LX.Download.
       otherSourceCache.set(musicInfo, source)
       resolve(source)
     }).catch(reject).finally(() => {
-      if (timeout) BackgroundTimer.clearTimeout(timeout)
+      if (timeout) clearTimeout(timeout)
     })
   }).then((otherSource) => {
     // if (otherSource.length) void saveOtherSourceFromStore(musicInfo.id, otherSource)

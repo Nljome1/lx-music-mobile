@@ -167,11 +167,6 @@ declare global {
       'player.isHandleAudioFocus': boolean
 
       /**
-       * 是否启用音频卸载功能（这可以节省耗电量，没有播放异常问题不建议关闭）
-       */
-      'player.isEnableAudioOffload': boolean
-
-      /**
        * 是否显示歌词翻译
        */
       'player.isShowLyricTranslation': boolean
