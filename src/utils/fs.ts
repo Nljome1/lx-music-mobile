@@ -1,34 +1,46 @@
+import { Platform } from 'react-native'
 import RNFS from 'react-native-fs'
-import {
-  Dirs,
-  FileSystem,
-  AndroidScoped,
-  type OpenDocumentOptions,
-  type Encoding,
-  type HashAlgorithm,
-  getExternalStoragePaths as _getExternalStoragePaths,
+
+// iOS 上使用原生模块 FileSystemModule，Android 上使用 react-native-file-system
+// 使用条件 require 避免 iOS 上导入 Android 专属依赖导致运行时错误
+const isIOS = Platform.OS === 'ios'
+
+// 类型导入（编译时移除，不影响运行时）
+import type {
+  OpenDocumentOptions,
+  Encoding,
+  HashAlgorithm,
 } from 'react-native-file-system'
 
 export type {
   FileType,
 } from 'react-native-file-system'
 
-// export const externalDirectoryPath = RNFS.ExternalDirectoryPath
+// Android 上条件加载 react-native-file-system
+const RNFileSystem = isIOS ? null : require('react-native-file-system')
+const Dirs = isIOS ? null : RNFileSystem.Dirs
+const FileSystem = isIOS ? null : RNFileSystem.FileSystem
+const AndroidScoped = isIOS ? null : RNFileSystem.AndroidScoped
+const _getExternalStoragePaths = isIOS ? null : RNFileSystem.getExternalStoragePaths
 
 export const extname = (name: string) => name.lastIndexOf('.') > 0 ? name.substring(name.lastIndexOf('.') + 1) : ''
 
-export const temporaryDirectoryPath = Dirs.CacheDir
-export const externalStorageDirectoryPath = Dirs.SDCardDir
-export const privateStorageDirectoryPath = Dirs.DocumentDir
+// 路径常量：iOS 使用 RNFS 路径，Android 使用 Dirs 枚举
+export const temporaryDirectoryPath = isIOS ? RNFS.CachesDirectoryPath : Dirs.CacheDir
+export const externalStorageDirectoryPath = isIOS ? RNFS.DocumentDirectoryPath : Dirs.SDCardDir
+export const privateStorageDirectoryPath = isIOS ? RNFS.DocumentDirectoryPath : Dirs.DocumentDir
 
-export const getExternalStoragePaths = async(is_removable?: boolean) => _getExternalStoragePaths(is_removable)
+export const getExternalStoragePaths = async(is_removable?: boolean) => isIOS
+  ? [RNFS.DocumentDirectoryPath]
+  : _getExternalStoragePaths(is_removable)
 
-export const selectManagedFolder = async(isPersist: boolean = false) => AndroidScoped.openDocumentTree(isPersist)
-export const selectFile = async(options: OpenDocumentOptions) => AndroidScoped.openDocument(options)
-export const removeManagedFolder = async(path: string) => AndroidScoped.releasePersistableUriPermission(path)
-export const getManagedFolders = async() => AndroidScoped.getPersistedUriPermissions()
+// Android Scoped Storage 在 iOS 上无对应概念，返回空值
+export const selectManagedFolder = async(isPersist: boolean = false) => isIOS ? null : AndroidScoped.openDocumentTree(isPersist)
+export const selectFile = async(options: OpenDocumentOptions) => isIOS ? null : AndroidScoped.openDocument(options)
+export const removeManagedFolder = async(path: string) => isIOS ? undefined : AndroidScoped.releasePersistableUriPermission(path)
+export const getManagedFolders = async() => isIOS ? [] : AndroidScoped.getPersistedUriPermissions()
 
-export const getPersistedUriList = async() => AndroidScoped.getPersistedUriPermissions()
+export const getPersistedUriList = async() => isIOS ? [] : AndroidScoped.getPersistedUriPermissions()
 
 
 export const readDir = async(path: string) => FileSystem.ls(path)
@@ -42,8 +54,6 @@ export const hash = async(path: string, algorithm: HashAlgorithm) => FileSystem.
 
 export const readFile = async(path: string, encoding?: Encoding) => FileSystem.readFile(path, encoding)
 
-
-// export const copyFile = async(fromPath: string, toPath: string) => FileSystem.cp(fromPath, toPath)
 
 export const moveFile = async(fromPath: string, toPath: string) => FileSystem.mv(fromPath, toPath)
 export const gzipFile = async(fromPath: string, toPath: string) => FileSystem.gzipFile(fromPath, toPath)
@@ -66,21 +76,9 @@ export const downloadFile = (url: string, path: string, options: Omit<RNFS.Downl
     }
   }
   return RNFS.downloadFile({
-    fromUrl: url, // URL to download file from
-    toFile: path, // Local filesystem path to save the file to
+    fromUrl: url,
+    toFile: path,
     ...options,
-    // headers: options.headers, // An object of headers to be passed to the server
-    // // background?: boolean;     // Continue the download in the background after the app terminates (iOS only)
-    // // discretionary?: boolean;  // Allow the OS to control the timing and speed of the download to improve perceived performance  (iOS only)
-    // // cacheable?: boolean;      // Whether the download can be stored in the shared NSURLCache (iOS only, defaults to true)
-    // progressInterval: options.progressInterval,
-    // progressDivider: options.progressDivider,
-    // begin: (res: DownloadBeginCallbackResult) => void;
-    // progress?: (res: DownloadProgressCallbackResult) => void;
-    // // resumable?: () => void;    // only supported on iOS yet
-    // connectionTimeout?: number // only supported on Android yet
-    // readTimeout?: number       // supported on Android and iOS
-    // // backgroundTimeout?: number // Maximum time (in milliseconds) to download an entire resource (iOS only, useful for timing out background downloads)
   })
 }
 

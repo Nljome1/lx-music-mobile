@@ -1,9 +1,17 @@
+import { Platform } from 'react-native'
 import TrackPlayer, { State } from 'react-native-track-player'
 import BackgroundTimer from 'react-native-background-timer'
 import { defaultUrl } from '@/config'
 // import { action as playerAction } from '@/store/modules/player'
 import settingState from '@/store/setting/state'
 import playerState from '@/store/player/state'
+
+// iOS 上使用原生 setTimeout/clearTimeout（AVAudioSession 已配置后台播放）
+// Android 上使用 BackgroundTimer（后台保活）
+const Timer = Platform.OS === 'ios' ? {
+  setTimeout: (fn: (...args: any[]) => void, delay?: number) => setTimeout(fn, delay),
+  clearTimeout: (id: number | null) => { if (id) clearTimeout(id) },
+} : BackgroundTimer
 
 
 const list: LX.Player.Track[] = []
@@ -245,7 +253,7 @@ const debounceUpdateMetaInfoTools = {
     return (musicInfo: LX.Player.MusicInfo) => {
       // console.log('debounceUpdateMetaInfoTools', musicInfo)
       if (timer) {
-        BackgroundTimer.clearTimeout(timer)
+        Timer.clearTimeout(timer)
         timer = null
       }
       // if (delayTimer) {
@@ -254,7 +262,7 @@ const debounceUpdateMetaInfoTools = {
       // }
       if (isDelayRun) {
         _musicInfo = musicInfo
-        timer = BackgroundTimer.setTimeout(() => {
+        timer = Timer.setTimeout(() => {
           timer = null
           let musicInfo = _musicInfo
           _musicInfo = null
@@ -265,7 +273,7 @@ const debounceUpdateMetaInfoTools = {
       } else {
         isDelayRun = true
         void fn(musicInfo)
-        BackgroundTimer.setTimeout(() => {
+        Timer.setTimeout(() => {
           // delayTimer = null
           isDelayRun = false
         }, 500)

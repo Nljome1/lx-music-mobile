@@ -1,3 +1,4 @@
+import { Platform } from 'react-native'
 import TrackPlayer, { Capability, Event, RepeatMode, State } from 'react-native-track-player'
 import BackgroundTimer from 'react-native-background-timer'
 import { playMusic as handlePlayMusic } from './playList'
@@ -5,6 +6,12 @@ import { existsFile, moveFile, privateStorageDirectoryPath, temporaryDirectoryPa
 import { toast } from '@/utils/tools'
 // import { PlayerMusicInfo } from '@/store/modules/player/playInfo'
 
+// iOS 上使用原生 setTimeout/clearTimeout（AVAudioSession 已配置后台播放）
+// Android 上使用 BackgroundTimer（后台保活）
+const Timer = Platform.OS === 'ios' ? {
+  setTimeout: (fn: (...args: any[]) => void, delay?: number) => setTimeout(fn, delay),
+  clearTimeout: (id: number | null) => { if (id) clearTimeout(id) },
+} : BackgroundTimer
 
 export { useBufferProgress } from './hook'
 
@@ -118,15 +125,15 @@ const playMusic = ((fn: (musicInfo: LX.Player.PlayMusic, url: string, time: numb
     _url = url
     _time = time
     if (timer) {
-      BackgroundTimer.clearTimeout(timer)
+      Timer.clearTimeout(timer)
       timer = null
     }
     if (isDelayRun) {
       if (delayTimer) {
-        BackgroundTimer.clearTimeout(delayTimer)
+        Timer.clearTimeout(delayTimer)
         delayTimer = null
       }
-      timer = BackgroundTimer.setTimeout(() => {
+      timer = Timer.setTimeout(() => {
         timer = null
         let musicInfo = _musicInfo
         let url = _url
@@ -140,7 +147,7 @@ const playMusic = ((fn: (musicInfo: LX.Player.PlayMusic, url: string, time: numb
     } else {
       isDelayRun = true
       fn(musicInfo, url, time)
-      delayTimer = BackgroundTimer.setTimeout(() => {
+      delayTimer = Timer.setTimeout(() => {
         delayTimer = null
         isDelayRun = false
       }, 500)
@@ -189,12 +196,12 @@ export const migratePlayerCache = async() => {
   if (await existsFile(newCachePath)) return
   const oldCachePath = temporaryDirectoryPath + '/TrackPlayer'
   if (!await existsFile(oldCachePath)) return
-  let timeout: number | null = BackgroundTimer.setTimeout(() => {
+  let timeout: number | null = Timer.setTimeout(() => {
     timeout = null
     toast(global.i18n.t('player_cache_migrating'), 'long')
   }, 2_000)
   await moveFile(oldCachePath, newCachePath).finally(() => {
-    if (timeout) BackgroundTimer.clearTimeout(timeout)
+    if (timeout) Timer.clearTimeout(timeout)
   })
 }
 
